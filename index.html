@@ -1392,47 +1392,29 @@ function QuoteForm() {
     e.preventDefault();
     setSending(true);
 
-    const emailHtml = `
-      <div style="font-family:sans-serif;max-width:600px;color:#0d1b2e">
-        <div style="background:#0d1b2e;padding:24px 32px;border-bottom:4px solid #d42020">
-          <h1 style="color:white;font-size:22px;margin:0;letter-spacing:1px">NXT-GEN TRANSPORTATION</h1>
-          <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:13px">New Quote Request</p>
-        </div>
-        <div style="padding:32px">
-          <table style="width:100%;border-collapse:collapse;font-size:15px">
-            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;width:140px;color:#555">Name</td><td style="padding:10px 0;border-bottom:1px solid #eee">${form.name}</td></tr>
-            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#555">Phone</td><td style="padding:10px 0;border-bottom:1px solid #eee"><a href="tel:${form.phone}" style="color:#d42020">${form.phone}</a></td></tr>
-            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#555">Email</td><td style="padding:10px 0;border-bottom:1px solid #eee"><a href="mailto:${form.email}" style="color:#d42020">${form.email}</a></td></tr>
-            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#555">Pickup</td><td style="padding:10px 0;border-bottom:1px solid #eee">${form.pickup}</td></tr>
-            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#555">Drop-off</td><td style="padding:10px 0;border-bottom:1px solid #eee">${form.dropoff}</td></tr>
-            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#555">Move Date</td><td style="padding:10px 0;border-bottom:1px solid #eee">${form.date || 'Not specified'}</td></tr>
-            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#555">Items</td><td style="padding:10px 0;border-bottom:1px solid #eee">${form.items}</td></tr>
-            <tr><td style="padding:10px 0;font-weight:700;color:#555">Notes</td><td style="padding:10px 0">${form.notes || 'None'}</td></tr>
-          </table>
-          <p style="margin-top:24px;padding:16px;background:#fff5f5;border-left:4px solid #d42020;color:#d42020;font-weight:700">
-            Reply to this email or call ${form.phone} to follow up.
-          </p>
-        </div>
-      </div>
-    `;
-
     try {
-      const res = await fetch('https://api.resend.com/emails', {
+      const res = await fetch('https://formsubmit.co/ajax/nxtgenn2024@gmail.com', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer REMOVED',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
-          from: 'NXT-GEN Quotes <onboarding@resend.dev>',
-          to: ['nxtgenn2024@gmail.com'],
-          reply_to: form.email,
-          subject: `New Moving Quote — ${form.name} (${form.phone})`,
-          html: emailHtml
+          _subject: `New Moving Quote — ${form.name} (${form.phone})`,
+          _replyto: form.email,
+          _template: 'table',
+          Name: form.name,
+          Phone: form.phone,
+          Email: form.email,
+          'Pickup Address': form.pickup,
+          'Drop-off Address': form.dropoff,
+          'Move Date': form.date || 'Not specified',
+          'Items to Move': form.items,
+          'Access Notes': form.notes || 'None'
         })
       });
 
-      if (!res.ok) throw new Error(`Resend error ${res.status}`);
+      if (!res.ok) throw new Error(`Submit error ${res.status}`);
 
       try {
         const submission = {

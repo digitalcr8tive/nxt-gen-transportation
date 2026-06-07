@@ -1000,6 +1000,90 @@
   }
   .settings-input:focus { border-color: var(--red); }
 
+  /* HAMBURGER / MOBILE NAV */
+  .hamburger-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: var(--white);
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+  }
+  .hamburger-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: currentColor;
+    transition: transform 0.2s, opacity 0.2s;
+    transform-origin: center;
+  }
+  .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+  .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: var(--navy);
+    border-bottom: 3px solid var(--red);
+    z-index: 997;
+    flex-direction: column;
+    padding: 8px 0 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .mobile-nav.open { display: flex; }
+  .mobile-nav-link {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    padding: 15px 24px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+    border-bottom: 1px solid var(--navy-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s;
+  }
+  .mobile-nav-link:hover { background: rgba(255,255,255,0.05); }
+  .mobile-nav-link:last-of-type { border-bottom: none; }
+  .mobile-nav-phone { color: var(--red) !important; }
+  .mobile-nav-cta {
+    display: block;
+    margin: 12px 20px 0;
+    background: var(--red);
+    color: var(--white);
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 15px 24px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .mobile-nav-cta:hover { background: #b81818; }
+  @media (max-width: 768px) {
+    .hamburger-btn { display: flex; }
+    .nav-links { display: none; }
+  }
+
   /* MOBILE STICKY CTA */
   .sticky-mobile-btn {
     position: fixed;
@@ -1040,9 +1124,23 @@
     .settings-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
-    nav, .hero, .trust-bar, .pain-section, .services-section, .promise-section, .reviews-section, .map-section, .faq-section, .cta-section, .quote-section { padding-left: 20px; padding-right: 20px; }
+    nav { padding: 0 16px; }
+    .hero { padding: 40px 20px; min-height: unset; }
+    .trust-bar { padding: 12px 20px; gap: 20px; }
+    .pain-section, .services-section, .promise-section, .reviews-section, .map-section, .faq-section, .cta-section, .quote-section { padding-left: 20px; padding-right: 20px; }
     .services-grid { grid-template-columns: 1fr; }
+    .promise-cards { grid-template-columns: 1fr; }
+    .quote-feature-cards { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
+    .hero-headline { font-size: clamp(44px, 13vw, 72px); }
+    .hero-sub { font-size: 15px; }
+    .section-headline { font-size: clamp(30px, 9vw, 52px); }
+    .map-container { height: 340px; }
+    .quote-section { padding-top: 48px; padding-bottom: 64px; }
+    .quote-form-box { padding: 24px 20px; }
+    .cta-section { padding: 48px 20px; }
+    .faq-section { padding-top: 48px; padding-bottom: 48px; }
   }
 </style>
 </head>
@@ -1739,6 +1837,7 @@ function AdminDashboard({ onBack, onSignOut }) {
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function LandingPage({ onAdminClick }) {
   const [showStickyBtn, setShowStickyBtn] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollTo = (id) => {
     const el = document.getElementById(id);
@@ -1763,7 +1862,23 @@ function LandingPage({ onAdminClick }) {
           <a href="tel:5017479514" style={{color:'var(--red)', fontFamily:'var(--font-head)', fontWeight:700, fontSize:'13px', letterSpacing:'1px', textDecoration:'none', display:'inline-flex', alignItems:'center', gap:'6px'}}><IconPhone size={14} /> 501-747-9514</a>
           <button className="btn-red" onClick={() => scrollTo('quote')}>Get a Quote</button>
         </div>
+        <button className={`hamburger-btn${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
       </nav>
+
+      {menuOpen && (
+        <div className="mobile-nav open">
+          <button className="mobile-nav-link" onClick={() => { scrollTo('services'); setMenuOpen(false); }}>Services</button>
+          <button className="mobile-nav-link" onClick={() => { scrollTo('map'); setMenuOpen(false); }}>Map</button>
+          <button className="mobile-nav-link" onClick={() => { scrollTo('reviews'); setMenuOpen(false); }}>Reviews</button>
+          <button className="mobile-nav-link" onClick={() => { scrollTo('faq'); setMenuOpen(false); }}>FAQ</button>
+          <a href="tel:5017479514" className="mobile-nav-link mobile-nav-phone" onClick={() => setMenuOpen(false)}>
+            <IconPhone size={16} /> 501-747-9514
+          </a>
+          <button className="mobile-nav-cta" onClick={() => { scrollTo('quote'); setMenuOpen(false); }}>Get Free Quote →</button>
+        </div>
+      )}
 
       <section className="hero">
         <div>

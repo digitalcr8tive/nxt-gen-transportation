@@ -35,7 +35,7 @@
       "description": "5-star rated moving company serving Seattle, Tacoma, Bellevue, and surrounding Puget Sound cities. Licensed and insured residential, commercial, packing, junk removal, and long-distance moves. Free quotes.",
       "url": "https://nxt-gentransportation.com",
       "telephone": "+12067053489",
-      "email": "admin@nxtgentransportation",
+      "email": "admin@nxtgentransportation.com",
       "priceRange": "$$",
       "openingHoursSpecification": {
         "@type": "OpeningHoursSpecification",
@@ -1395,7 +1395,7 @@ function QuoteForm() {
     setSending(true);
 
     try {
-      const res = await fetch('https://formsubmit.co/ajax/admin@nxtgentransportation', {
+      const res = await fetch('https://formsubmit.co/ajax/admin@nxtgentransportation.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1528,10 +1528,10 @@ function AdminLogin({ onLogin, onBack }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (email === 'admin@nxtgentransportation' && password === 'admin123') {
+    if (email === 'admin@nxtgentransportation.com' && password === 'admin501') {
       onLogin();
     } else {
-      setError('Invalid email or password. Demo: admin@nxtgentransportation / admin123');
+      setError('Invalid email or password. Demo: admin@nxtgentransportation.com / admin501');
     }
   };
 
@@ -1588,7 +1588,7 @@ function AdminDashboard({ onBack, onSignOut }) {
   const [activeTab, setActiveTab] = useState('submissions');
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All statuses');
-  const [settingsEmail, setSettingsEmail] = useState('admin@nxtgentransportation');
+  const [settingsEmail, setSettingsEmail] = useState('admin@nxtgentransportation.com');
   const [settingsNewPw, setSettingsNewPw] = useState('');
   const [settingsCurPw, setSettingsCurPw] = useState('');
 
@@ -1973,7 +1973,7 @@ function LandingPage({ onAdminClick }) {
         <div className="cta-contact">
           Or contact us directly:<br/>
           Phone: <a href="tel:2067053489">(206) 705-3489</a><br/>
-          Email: <a href="mailto:admin@nxtgentransportation">admin@nxtgentransportation</a><br/>
+          Email: <a href="mailto:admin@nxtgentransportation.com">admin@nxtgentransportation.com</a><br/>
         </div>
         <div style={{marginTop:24}}>
           <button className="admin-link-small" onClick={onAdminClick}>Admin Login</button>

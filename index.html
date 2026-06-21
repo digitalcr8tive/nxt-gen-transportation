@@ -142,6 +142,19 @@
 }
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyBbmOR7WhAOhmqifGgOTMTLVFb8q2KZQo0",
+    authDomain: "nxt-gen-transportation.firebaseapp.com",
+    projectId: "nxt-gen-transportation",
+    storageBucket: "nxt-gen-transportation.firebasestorage.app",
+    messagingSenderId: "334684515335",
+    appId: "1:334684515335:web:fbdd77e4848822ca6b4ea2"
+  });
+  const db = firebase.firestore();
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1419,8 +1432,7 @@ function QuoteForm() {
       if (!res.ok) throw new Error(`Submit error ${res.status}`);
 
       try {
-        const submission = {
-          id: Date.now(),
+        await db.collection('submissions').add({
           date: new Date().toLocaleDateString(),
           name: form.name,
           email: form.email,
@@ -1429,11 +1441,13 @@ function QuoteForm() {
           to: form.dropoff,
           moveDate: form.date || '—',
           items: form.items,
+          notes: form.notes || '',
           status: 'NEW',
-          done: false
-        };
-        const existing = JSON.parse(localStorage.getItem('nxtgen_submissions') || '[]');
-        localStorage.setItem('nxtgen_submissions', JSON.stringify([submission, ...existing]));
+          done: false,
+          trashed: false,
+          deletedAt: null,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
       } catch(_) {}
 
       setSubmitted(true);
@@ -1561,30 +1575,22 @@ function AdminLogin({ onLogin, onBack }) {
 }
 
 // ─── ADMIN DASHBOARD ──────────────────────────────────────────────────────────
-const mockSubmissions = [
-  { id: 1, date: '4/24/2026', name: 'Joe R', email: 'jdgoespro@gmail.com', phone: '501-246-0591', from: '—', to: '—', moveDate: '—', items: '—', status: 'NEW', done: false },
-  { id: 2, date: '4/24/2026', name: 'Test User', email: 'test@example.com', phone: '555-123-4567', from: '—', to: '—', moveDate: '—', items: '—', status: 'NEW', done: false },
-];
-
 function AdminDashboard({ onBack, onSignOut }) {
-  const [submissions, setSubmissions] = useState(() => {
-    try {
-      const saved = localStorage.getItem('nxtgen_submissions');
-      return saved ? JSON.parse(saved) : mockSubmissions;
-    } catch { return mockSubmissions; }
-  });
-  const [trash, setTrash] = useState(() => {
-    try {
-      const saved = localStorage.getItem('nxtgen_trash');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [submissions, setSubmissions] = useState([]);
+  const [trash, setTrash] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    try { localStorage.setItem('nxtgen_submissions', JSON.stringify(submissions)); } catch {}
-  }, [submissions]);
-  useEffect(() => {
-    try { localStorage.setItem('nxtgen_trash', JSON.stringify(trash)); } catch {}
-  }, [trash]);
+    const unsub = db.collection('submissions')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(snapshot => {
+        const all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSubmissions(all.filter(s => !s.trashed));
+        setTrash(all.filter(s => s.trashed));
+        setLoading(false);
+      }, () => setLoading(false));
+    return () => unsub();
+  }, []);
   const [activeTab, setActiveTab] = useState('submissions');
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All statuses');
@@ -1593,28 +1599,26 @@ function AdminDashboard({ onBack, onSignOut }) {
   const [settingsCurPw, setSettingsCurPw] = useState('');
 
   const toggleDone = (id) => {
-    setSubmissions(ss => ss.map(s => s.id === id ? {...s, done: !s.done} : s));
+    const sub = submissions.find(s => s.id === id);
+    if (sub) db.collection('submissions').doc(id).update({ done: !sub.done });
   };
 
   const moveToTrash = (id) => {
-    const item = submissions.find(s => s.id === id);
-    if (item) {
-      setSubmissions(ss => ss.filter(s => s.id !== id));
-      setTrash(tt => [...tt, {...item, deletedAt: new Date().toLocaleDateString()}]);
-    }
+    db.collection('submissions').doc(id).update({
+      trashed: true,
+      deletedAt: new Date().toLocaleDateString()
+    });
   };
 
   const restoreFromTrash = (id) => {
-    const item = trash.find(s => s.id === id);
-    if (item) {
-      const { deletedAt, ...restored } = item;
-      setTrash(tt => tt.filter(s => s.id !== id));
-      setSubmissions(ss => [...ss, restored]);
-    }
+    db.collection('submissions').doc(id).update({
+      trashed: false,
+      deletedAt: null
+    });
   };
 
   const permanentlyDelete = (id) => {
-    setTrash(tt => tt.filter(s => s.id !== id));
+    db.collection('submissions').doc(id).delete();
   };
 
   const filtered = submissions.filter(s => {
@@ -1661,7 +1665,13 @@ function AdminDashboard({ onBack, onSignOut }) {
           </button>
         </div>
 
-        {activeTab === 'submissions' && (
+        {loading && (
+          <div style={{textAlign:'center', padding:'60px 20px', color:'var(--gray)'}}>
+            <div style={{fontSize:18, fontFamily:'var(--font-head)', textTransform:'uppercase', letterSpacing:1}}>Loading submissions...</div>
+          </div>
+        )}
+
+        {!loading && activeTab === 'submissions' && (
           <>
             <div className="table-header">
               <h2 className="table-title">Quote Submissions</h2>
@@ -1725,12 +1735,16 @@ function AdminDashboard({ onBack, onSignOut }) {
           </>
         )}
 
-        {activeTab === 'trash' && (
+        {!loading && activeTab === 'trash' && (
           <>
             <div className="table-header">
               <h2 className="table-title">Trash</h2>
               {trash.length > 0 && (
-                <button className="ctrl-btn" style={{color:'#c0392b', borderColor:'#e0c8c8'}} onClick={() => setTrash([])}>
+                <button className="ctrl-btn" style={{color:'#c0392b', borderColor:'#e0c8c8'}} onClick={() => {
+                    const batch = db.batch();
+                    trash.forEach(s => batch.delete(db.collection('submissions').doc(s.id)));
+                    batch.commit();
+                  }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
                   Empty Trash
                 </button>
@@ -1787,7 +1801,7 @@ function AdminDashboard({ onBack, onSignOut }) {
           </>
         )}
 
-        {activeTab === 'settings' && (
+        {!loading && activeTab === 'settings' && (
         <div className="settings-card">
           <div className="settings-title">Account Settings</div>
           <div className="settings-sub">Update your admin login email or password. Your current password is required.</div>

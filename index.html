@@ -147,6 +147,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script>
   firebase.initializeApp({
     apiKey: "AIzaSyBbmOR7WhAOhmqifGgOTMTLVFb8q2KZQo0",
@@ -157,6 +158,7 @@
     appId: "1:334684515335:web:fbdd77e4848822ca6b4ea2"
   });
   const db = firebase.firestore();
+  const auth = firebase.auth();
 </script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1543,9 +1545,12 @@ function AdminLogin({ onLogin, onBack }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (email === 'admin@nxt-gentransportation.com' && password === 'admin501') {
+      try {
+        await auth.signInAnonymously();
+      } catch (_) { /* proceed even if auth fails */ }
       onLogin();
     } else {
       setError('Invalid email or password. Demo: admin@nxt-gentransportation.com / admin501');
@@ -2026,6 +2031,7 @@ function App() {
   };
   const endSession = () => {
     try { localStorage.removeItem('nxtgen_admin_session'); } catch {}
+    try { auth.signOut(); } catch {}
     setPage('admin-login');
   };
   const goHome = () => setPage('home');
